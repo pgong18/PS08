@@ -6,16 +6,6 @@ library(tictoc)
 
 
 
-# Demo of timer function --------------------------------------------------
-# Run the next 5 lines at once
-tic()
-Sys.sleep(3)
-timer_info <- toc()
-runtime <- timer_info$toc - timer_info$tic
-runtime
-
-
-
 # Get data ----------------------------------------------------------------
 # Accelerometer Biometric Competition Kaggle competition data
 # https://www.kaggle.com/c/accelerometer-biometric-competition/data
@@ -30,40 +20,60 @@ dim(train)
 model_formula <- as.formula(Device ~ X + Y + Z)
 
 # Values to use:
-n_values <- c(10, 20, 30)
-k_values <- c(2, 3, 4)
+n_values <- seq(from=1,to=2900000,by=20000)
+k_values <- seq(from=1, to=10000,by=2000)
 
 runtime_dataframe <- expand.grid(n_values, k_values) %>%
   as_tibble() %>%
   rename(n=Var1, k=Var2) %>%
   mutate(runtime = n*k)
-runtime_dataframe
-
 
 
 
 # Time knn here -----------------------------------------------------------
+time<-function(runtime_dataframe=runtime_dataframe){
+for (i in 1:nrow(runtime_dataframe) ) {
+  sam_size<-runtime_dataframe$n[i]
+tic()
 
+model_knn <- caret::knn3(model_formula, data=sample_n(train,size=sam_size,replace=FALSE),
+                         k = runtime_dataframe$k[i])
+clock<-toc()
+runtime_dataframe$runtime[i] <- clock$toc - clock$tic}
+  
+  
+  return(runtime_dataframe)
 
+}
 
-
+runtime_dataframe1<-time(runtime_dataframe)
 # Plot your results ---------------------------------------------------------
 # Think of creative ways to improve this barebones plot. Note: you don't have to
 # necessarily use geom_point
-runtime_plot <- ggplot(runtime_dataframe, aes(x=n, y=k, col=runtime)) +
-  geom_point()
+runtime_plot <- ggplot(runtime_dataframe1, aes(x=n, y=k,col=runtime)) +
+  #geom_point()
+  geom_tile(aes(fill=runtime))
+runtime_plot
+ggplot(runtime_dataframe1) +
+  #geom_point(aes(x=n, y=k, col=runtime))+scale_color_gradientn(colours=rainbow(100))
+geom
 
 runtime_plot
-ggsave(filename="firstname_lastname.png", width=16, height = 9)
-
-
+ggsave(filename="Pei_Gong.png", width=16, height = 9)
 
 
 # Runtime complexity ------------------------------------------------------
 # Can you write out the rough Big-O runtime algorithmic complexity as a function
 # of:
-# -n: number of points in training set
+# -n: number of points in training set 
 # -k: number of neighbors to consider
-# -d: number of predictors used? In this case d is fixed at 3
+# -d: number of predictors used? In this case d is fixed at 3 
+
+#O(nk+nd) 
+#step1, for each of the points we compute all the distance , which is nd 
+#step2: after storing the distance nd,we compare the values to find k neighbors, 
+#which involve loopoing through the distance 
+
+
 
 
