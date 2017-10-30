@@ -20,8 +20,8 @@ dim(train)
 model_formula <- as.formula(Device ~ X + Y + Z)
 
 # Values to use:
-n_values <- seq(from=1,to=2900000,by=20000)
-k_values <- seq(from=1, to=10000,by=2000)
+n_values <- seq(from=1,to=2900000,by=2000)
+k_values <- seq(from=1, to=10000,by=20)
 
 runtime_dataframe <- expand.grid(n_values, k_values) %>%
   as_tibble() %>%
@@ -34,29 +34,30 @@ runtime_dataframe <- expand.grid(n_values, k_values) %>%
 time<-function(runtime_dataframe=runtime_dataframe){
 for (i in 1:nrow(runtime_dataframe) ) {
   sam_size<-runtime_dataframe$n[i]
+  train_sub <- slice(train,1:sam_size)
 tic()
-
-model_knn <- caret::knn3(model_formula, data=sample_n(train,size=sam_size,replace=FALSE),
+model_knn <- caret::knn3(model_formula, data=train_sub,
                          k = runtime_dataframe$k[i])
 clock<-toc()
 runtime_dataframe$runtime[i] <- clock$toc - clock$tic}
   
   
   return(runtime_dataframe)
-
 }
 
-runtime_dataframe1<-time(runtime_dataframe)
+runtime_dataframe1<-time(runtime_dataframe) 
+write.csv(runtime_dataframe1,file="runtime.csv") 
+
 # Plot your results ---------------------------------------------------------
 # Think of creative ways to improve this barebones plot. Note: you don't have to
 # necessarily use geom_point
-runtime_plot <- ggplot(runtime_dataframe1, aes(x=n, y=k,col=runtime)) +
-  #geom_point()
-  geom_tile(aes(fill=runtime))
-runtime_plot
+
 ggplot(runtime_dataframe1) +
-  #geom_point(aes(x=n, y=k, col=runtime))+scale_color_gradientn(colours=rainbow(100))
-geom
+  geom_point(aes(x=n, y=k, col=log10(runtime)), size=2)
+runtime_plot2 <- ggplot(runtime_dataframe1, aes(x=n, y = runtime, group=k, col = k)) +
+  geom_line() +
+  labs(title = "Runtime with Varying n")
+runtime_plot2
 
 runtime_plot
 ggsave(filename="Pei_Gong.png", width=16, height = 9)
@@ -72,7 +73,9 @@ ggsave(filename="Pei_Gong.png", width=16, height = 9)
 #O(nk+nd) 
 #step1, for each of the points we compute all the distance , which is nd 
 #step2: after storing the distance nd,we compare the values to find k neighbors, 
-#which involve loopoing through the distance 
+#which involve loopoing through the distance, for n points we have complexity nk 
+
+#therefore in total we have O(nd+nk). when d=3, we have O(3n+nk)
 
 
 
